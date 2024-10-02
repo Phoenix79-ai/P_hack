@@ -1,0 +1,30 @@
+#include <iostream>
+#include <opencv2/opencv.hpp>
+int main() {
+    // IP address (replaced with the actual IP address)
+    std::string cameraURL = "http://*********** "; 
+    // Open the video stream 
+    cv::VideoCapture cap(cameraURL);
+    if (!cap.isOpened()) {
+        std::cout << "Error: Could not open camera stream"<<endl;
+        return -1;
+    }
+    cv::Mat frame;
+    while (true) {
+        // Capture frame-by-frame
+        cap >> frame;
+        // If frame is empty, break the loop
+        if (frame.empty()) {
+            break;
+        }
+        // Display the frame
+        cv::imshow("Camera Feed", frame);
+        // Wait for 30ms; if the user presses 'q', exit
+        if (cv::waitKey(30) == 'q') {
+            break;
+        }}
+    // Release the video capture object
+    cap.release();
+    cv::destroyAllWindows();
+    return 0;
+}
