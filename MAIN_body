@@ -1,0 +1,110 @@
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <random>
+
+// Enum to represent traffic light states
+enum class TrafficLightState {
+    RED,
+    GREEN,
+    YELLOW
+};
+
+// Class to represent a traffic light
+class TrafficLight {
+public:
+    TrafficLight() : state(TrafficLightState::RED) {}
+
+    void setState(TrafficLightState newState) {
+        state = newState;
+    }
+
+    TrafficLightState getState() const {
+        return state;
+    }
+
+    void displayState(const std::string& direction) const {
+        std::cout << direction << " Light: ";
+        switch (state) {
+            case TrafficLightState::RED:
+                std::cout << "RED\n";
+                break;
+            case TrafficLightState::GREEN:
+                std::cout << "GREEN\n";
+                break;
+            case TrafficLightState::YELLOW:
+                std::cout << "YELLOW\n";
+                break;
+        }
+    }
+
+private:
+    TrafficLightState state;
+};
+
+// Function to simulate traffic density data
+int getTrafficDensity() {
+    static std::default_random_engine generator(std::random_device{}());
+    static std::uniform_int_distribution<int> distribution(0, 100);
+    return distribution(generator);
+}
+
+// Function to transition traffic lights properly with YELLOW light
+void controlTrafficLights(TrafficLight& light, TrafficLight& opposingLight, int density) {
+    if (density > 70) {
+        if (light.getState() == TrafficLightState::GREEN) {
+            light.setState(TrafficLightState::YELLOW);
+            light.displayState("NS");
+            std::this_thread::sleep_for(std::chrono::seconds(2)); // YELLOW light duration
+        }
+        light.setState(TrafficLightState::RED);
+        opposingLight.setState(TrafficLightState::GREEN);
+    } else if (density > 30) {
+        light.setState(TrafficLightState::YELLOW);
+        light.displayState("NS");
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // YELLOW light duration
+        light.setState(TrafficLightState::RED);
+        opposingLight.setState(TrafficLightState::GREEN);
+    } else {
+        light.setState(TrafficLightState::GREEN);
+        opposingLight.setState(TrafficLightState::RED);
+    }
+}
+
+// Updated real-time monitoring with proper light synchronization
+void realTimeMonitoring() {
+    TrafficLight northSouthLight;
+    TrafficLight eastWestLight;
+    northSouthLight.setState(TrafficLightState::GREEN); // North-South starts green
+    eastWestLight.setState(TrafficLightState::RED); // East-West starts red
+
+    while (true) {
+        // Simulate real-time traffic density for each direction
+        int northSouthDensity = getTrafficDensity();
+        int eastWestDensity = getTrafficDensity();
+
+        // Synchronize traffic lights
+        if (northSouthDensity > eastWestDensity) {
+            controlTrafficLights(northSouthLight, eastWestLight, northSouthDensity);
+        } else {
+            controlTrafficLights(eastWestLight, northSouthLight, eastWestDensity);
+        }
+
+        // Display traffic light states
+        northSouthLight.displayState("North-South");
+        eastWestLight.displayState("East-West");
+        std::cout << "====================\n";
+
+        // Log traffic density data for monitoring
+        std::cout << "North-South Traffic Density: " << northSouthDensity << "\n";
+        std::cout << "East-West Traffic Density: " << eastWestDensity << "\n";
+
+        // Wait for a bit before updating again (simulates real-time updates)
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+}
+
+int main() {
+    realTimeMonitoring();
+    return 0;
+}
